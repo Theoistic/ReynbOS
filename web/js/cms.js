@@ -647,7 +647,7 @@ var CMS = (function () {
     }, {
       key: "getFileListUrl",
       value: function getFileListUrl(type, config) {
-        return  config.mode === 'GITHUB' ? getGithubUrl('web/' + type, config.github) : 'web/' + type;
+        return  config.mode === 'GITHUB' ? getGithubUrl('/web/' + type, config.github) : 'web/' + type;
       }
       /**
        * Get file URL.
@@ -659,7 +659,7 @@ var CMS = (function () {
     }, {
       key: "getFileUrl",
       value: function getFileUrl(file, mode, type) {
-        return mode === 'GITHUB' ? file['download_url'] : "".concat('web/' + type, "/").concat(getFilenameFromPath(file.getAttribute('href')));
+        return mode === 'GITHUB' ? file['download_url'] : "".concat('/web/' + type, "/").concat(getFilenameFromPath(file.getAttribute('href')));
       }
       /**
        * Get file elements.
