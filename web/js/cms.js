@@ -647,7 +647,7 @@ var CMS = (function () {
     }, {
       key: "getFileListUrl",
       value: function getFileListUrl(type, config) {
-        return  config.mode === 'GITHUB' ? getGithubUrl('/web/' + type, config.github) : 'web/' + type;
+        return  config.mode === 'GITHUB' ? getGithubUrl('web/' + type, config.github) : 'web/' + type;
       }
       /**
        * Get file URL.
