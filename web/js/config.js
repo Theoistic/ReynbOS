@@ -20,7 +20,7 @@ var config = {
   },
 
   // The name of the layouts directory.
-  layoutDirectory: '/web/layouts',
+  layoutDirectory: '/ReynbOS/web/layouts',
 
   // The error layout template name.
   errorLayout: 'error',
