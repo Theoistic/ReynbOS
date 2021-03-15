@@ -26,8 +26,8 @@ jobs:
           # Build everything
           sudo bash reynbos bootstrap
           # Delete output directory
-          rm -rf "work/"
-          mv ReynbOS.iso ${release_name}
+          # rm -rf "work/" # just maybe.
+          sudo mv ReynbOS.iso ${release_name}
           
       - name: Publish
         uses: softprops/action-gh-release@v1
