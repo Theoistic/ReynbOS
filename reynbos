@@ -50,7 +50,7 @@ function reynbos_getdebian() { #HELP getdebian - get the base debian rootfs
     else
         mkdir -p $ROOTFS_DIR
         echo "Download the debian rootfs"
-        sudo debootstrap --arch=amd64 --exclude=debian-faq,debian-faq-de,debian-faq-fr,debian-faq-it,fdutils,vim,vi,iamerican,reportdug --variant=minbase stable $ROOTFS_DIR http://ftp.us.debian.org/debian
+        sudo debootstrap --arch=amd64 --exclude=debian-faq,debian-faq-de,debian-faq-fr,debian-faq-it,fdutils,vim,vi,iamerican,reportdug --variant=minbase stable $ROOTFS_DIR https://ftp.us.debian.org/debian
         echo "Backing up the rootfs"
         tar -zcvf rootfs.tar.gz $ROOTFS_DIR
     fi
