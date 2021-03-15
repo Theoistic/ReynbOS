@@ -11,6 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      
+      - name: Requirements
+        shell: bash
+        run: |
+          #setup requirements
+          bash reynbos requirements
 
       - name: Build
         shell: bash
@@ -22,6 +28,7 @@ jobs:
           # Delete output directory
           rm -rf "work/"
           mv ReynbOS.iso ${release_name}
+          
       - name: Publish
         uses: softprops/action-gh-release@v1
         with:
