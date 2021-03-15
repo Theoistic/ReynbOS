@@ -18,7 +18,7 @@ jobs:
           tag=$(git describe --tags --abbrev=0)
           release_name="Reynbos-$tag.iso"
           # Build everything
-          reynbos bootstrap
+          bash reynbos bootstrap
           # Delete output directory
           rm -rf "work/"
           mv ReynbOS.iso ${release_name}
