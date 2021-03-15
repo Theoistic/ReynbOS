@@ -120,7 +120,7 @@ apt-get install -y --no-install-recommends linux-image-amd64 live-boot systemd-s
 
 # base ReynbOS drivers, wm & tools
 apt-get install -y --no-install-recommends network-manager net-tools wireless-tools wpagui curl openssh-server openssh-client xserver-xorg-core xserver-xorg xinit xterm \
-    x11-xserver-utils screenfetch screen git lightdm i3 i3status compton rofi xbacklight feh conky nano less sudo wget gnupg ca-certificates lxappearance arc-theme
+    x11-xserver-utils screenfetch screen git lightdm i3 i3status compton rofi xbacklight feh conky nano less sudo wget gnupg ca-certificates lxappearance arc-theme plymouth plymouth-themes
 
 apt update
 
@@ -165,8 +165,16 @@ EOF
     chroot $ROOTFS_DIR ./systemsetup.sh
     rm -f $ROOTFS_DIR/systemsetup.sh
 
+    cp -R rootfs $WORK_DIR
+    cp Media/ReynbOS_Splash_1.png $ROOTFS_DIR/root/.config/ReynbOS_Splash_1.png
+    cp Media/ReynbOS_Splash_bare_nobg.png $ROOTFS_DIR/usr/share/plymouth/themes/reynbos/ReynbOS_Splash_bare_nobg.png
+
 #post installation script
 cat <<EOF >$ROOTFS_DIR/systemsetup.sh
+# install the reynbos plymouth theme
+update-alternatives --install /usr/share/plymouth/themes/default.plymouth default.plymouth /usr/share/plymouth/themes/reynbos/reynbos.plymouth" 100
+# set the reynbos theme as the default
+plymouth-set-default-theme -R reynbos
 update-initramfs
 echo "done .. Running CleanUp"
 truncate -s 0 /etc/machine-id
@@ -183,8 +191,6 @@ EOF
     #sudo cp -f Resources/compton.conf work/rootfs/root/.config/compton.conf
     #sudo cp -f Resources/update work/rootfs/etc/ReynbOS/update
     #sudo cp -f Resources/terminal work/rootfs/etc/ReynbOS/terminal
-    cp -R rootfs $WORK_DIR
-    cp Media/ReynbOS_Splash_1.png $ROOTFS_DIR/root/.config/ReynbOS_Splash_1.png
 }
 
 function reynbos_iso() { #HELP iso - generate iso image
@@ -205,11 +211,11 @@ function reynbos_iso() { #HELP iso - generate iso image
 
 cat <<EOF >$WORK_DIR/scratch/grub.cfg
 search --set=root --file /DEBIAN_CUSTOM
-insmod all_video
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"
 set default="0"
 set timeout=0
 menuentry "$PROJECT_NAME Live" {
-    linux /vmlinuz boot=live quiet nomodeset
+    linux /vmlinuz boot=live quiet splash
     initrd /initrd.img
 }
 EOF

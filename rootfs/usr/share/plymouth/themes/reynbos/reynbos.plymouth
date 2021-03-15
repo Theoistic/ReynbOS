@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=ReynbOS Theme
+Description=This is the plymouth theme for ReynbOS
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/reynbos
+ScriptFile=/usr/share/plymouth/themes/reynbos/reynbos.script
