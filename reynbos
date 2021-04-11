@@ -153,13 +153,13 @@ apt-get install -y --no-install-recommends network-manager net-tools wireless-to
 
 apt update
 
-sudo adduser --disabled-password --gecos "" --shell /bin/bash rey
+sudo adduser --disabled-password --gecos "" rey
+echo "rey:l33t" | chpasswd
 sudo usermod -g sudo rey
-passwd -d rey
 
 # configurations ###########################################################################################################################################
 sed -i 's/#autologin-user=/autologin-user=rey/g' /etc/lightdm/lightdm.conf
-sed -i 's/#autologin-guest=false/autologin-guest=false/g' /etc/lightdm/lightdm.conf
+#sed -i 's/#autologin-guest=false/autologin-guest=false/g' /etc/lightdm/lightdm.conf
 sed -i 's/#autologin-user-timeout=/autologin-user-timeout=0/g' /etc/lightdm/lightdm.conf
 sed -i 's/#autologin-session=/autologin-session=i3/g' /etc/lightdm/lightdm.conf
 sed -i 's/user != root//g' /etc/pam.d/lightdm-autologin
