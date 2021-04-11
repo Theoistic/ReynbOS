@@ -65,3 +65,7 @@ That will flash the ISO with persistance to the drive.
 **Note that you need to make sure you are pointing to the correct dev, if sda is not your USB it will remove all files on  that drive and replace it with ReynbOS, We take no resposibiliy if you target the wrong drive** 
 
 that is a very important note. if you are having problems with flashing or bootstrapping ReynbOS please refer to the github discussions.
+
+### Credentials
+
+So as a live distro, we've setup a base user which ofc is rey, with the password: l33t
