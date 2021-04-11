@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+  <head>
+      <meta charset="utf-8">
+      <meta name="description" content="">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>ReynbOS</title>
+      <link rel="shortcut icon" type="image/jpg" href="Media/ReynbOS_Icon.ico"/>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+      <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:300,400,600,700,800,900" rel="stylesheet">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/railscasts.min.css">
+      <link rel="stylesheet" href="web/scribbler-global.css">
+      <link rel="stylesheet" href="web/scribbler-landing.css">
+  </head>
+  <body>
+    <nav>
+      <div class="logo"></div>
+      <ul class="menu">
+        <div class="menu__item toggle"><span></span></div>
+        <li class="menu__item"><a href="https://github.com/Theoistic/ReynbOS" class="link link--light"><i class="fa fa-github"></i> Github</a></li>
+        <li class="menu__item"><a href="https://ReynbOS.live" class="link link--light"><i class="fa fa-home"></i> Home</a></li>
+      </ul>
+    </nav>
+    <div class="hero">
+      <h1 class="hero__title logo-large"></h1>
+    </div>
+    <div class="hero__terminal">
+      <pre>
+        <!-- Place your demo code here -->
+        <code class="shell-session demo">root@reynbos:~$ git clone https://github.com/Theoistic/ReynbOS.git
+          root@reynbos:~$ cd ReynbOS/
+
+          root@reynbos:~Reynbos$ ./reynbos bootstrap
+          [Successfully build the Live ISO]
+
+          root@reynbos:~Reynbos$ ./reynbos persist /dev/sda
+          [Successfully installed ReynbOS with persistance on USB]</code>
+      </pre>
+    </div>
+    <div class="wrapper">
+      <div class="feature">
+        <div class="feature__item">
+          <h3 class="section__title">Fast & Light</h3>
+          <p>Starting out with a live distro, the setup has to be light-weight and fast. stripping all non-essentials from our base.</p>
+        </div>
+        <div class="feature__item">
+          <h3 class="section__title">Configuration</h3>
+          <p>Easy to build and customize by adding base packages to the <span class="code code--inline">custom.sh</span> file at build time.</p>
+        </div>
+        <div class="feature__item">
+          <h3 class="section__title">Keybindings</h3>
+          <p>using i3, we need to learn some basic keybindings, but once that is out of the way, productivity to the MAX!!</p>
+        </div>
+      </div>
+      <div class="keybinding">
+        <ul class="keybinding__detail">
+          <h3 class="keybinding__title">Default Keybindings</h3>
+          <li>Open Terminal <span class="keybinding__label">Alt+Return</span></li>
+          <li>Quit Window <span class="keybinding__label">Alt+Shift+Q</span></li>
+        </ul>
+        <ul class="keybinding__detail">
+          <h3 class="keybinding__title">Quick Access Keybindings</h3>
+          <li><span class="keybinding__label">Alt+C</span> Visual Studio Code</li>
+          <li><span class="keybinding__label">Alt+B</span> Firefox</li>
+        </ul>
+      </div>
+      <div class="callout">
+        <p>Read our documentation for advanced keybindings and customization</p>
+        <a href="web/doc.html" class="button--primary">Documentation</a>
+      </div>
+    </div>
+    <div class="changelog">
+      <div class="wrapper">
+        <h3 class="section__title">Changelog</h3>
+        <div class="changelog__item">
+          <div class="changelog__meta">
+            <h4 class="changelog__title">v0.9</h4>
+            <small class="changelog__date">15/03/2021</small>
+          </div>
+          <div class="changelog__detail">
+            <ul>
+              <li>Basic Build Script</li>
+              <li>Initial Beta Release</li>
+            </ul>
+          </div>
+        </div>
+        <div class="changelog__callout">
+          <a href="web/doc.html#changelog" class="button--secondary">Checkout Full Log</a>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="web/reynbos_web.js"></script>
+  </body>
+</html>

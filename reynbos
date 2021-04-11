@@ -1,0 +1,458 @@
+#!/usr/bin/env bash
+# Reynbos Version 0.9.0.0 
+# Author: Theoistic
+# For more information please checkout the @rey.nbow discord server
+
+BASE_DIR=$(pwd)
+# CONSTs
+PROJECT_NAME=ReynbOS
+WORK_DIR=$BASE_DIR/work
+KERNEL_VER=5.7
+KERNEL_VER_MOD=$KERNEL_VER.0
+KERNEL_SOURCE_URL=https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-$KERNEL_VER.tar.xz
+KERNEL_EXTRACT_DIR=kernel/
+DOWNLOAD_URL=$(echo $KERNEL_SOURCE_URL| cut -f2 -d'=')
+ARCHIVE_FILE=${DOWNLOAD_URL##*/}
+ROOTFS_DIR=$WORK_DIR/rootfs
+ISO_DIR=$WORK_DIR/isoimage
+VERSION=`date -I | tr -d -`
+duration_start=`date +%s`
+TMP_DIR=/tmp
+GITSRC=https://raw.githubusercontent.com/Theoistic/ReynbOS/master
+
+function reynbos_requirements() { #HELP requirements - Fetch the required packages to run the reynbos build script
+    apt install -y screenfetch \
+        net-tools \
+        openssh-server \
+        debootstrap \
+        squashfs-tools \
+        xorriso \
+        grub-pc-bin \
+        grub-efi-amd64-bin \
+        mtools \
+        wget \
+        make \
+        gawk \
+        gcc-8 \
+        flex \
+        bison \
+        bc \
+        libelf-dev \
+        libssl-dev \
+        curl \
+        qemu-system
+}
+
+function reynbos_install() { #HELP install - install the reynbos script globally
+    cp reynbos /usr/local/bin/reynbos
+    reynbos_requirements
+}
+
+function reynbos_packfs() { #HELP packfs - backup the custom fs
+    log "Packing File System"
+    cp Media/ReynbOS_Splash_1.png rootfs/root/.config/ReynbOS_Splash_1.png
+    cp Media/ReynbOS_Splash_bare_nobg.png rootfs/usr/share/plymouth/themes/reynbos/ReynbOS_Splash_bare_nobg.png
+    tar -zcvf rootfs.tar.gz rootfs/
+}
+
+function reynbos_extractfs() { #HELP extractfs - extract the custom fs
+    log "fetching latest base File System"
+    wget -c $GITSRC/rootfs.tar.gz
+    tar -xzvf $BASE_DIR/rootfs.tar.gz
+}
+
+function reynbos_getdebian() { #HELP getdebian - get the base debian rootfs
+    if [[ -f "rootfs.debian.tar.gz" ]]; then
+        reynbos_rebase
+    else
+        mkdir -p $ROOTFS_DIR
+        log "Download the debian rootfs"
+        sudo debootstrap --arch=amd64 --components main,contrib,non-free --variant=minbase stable $ROOTFS_DIR
+        log "Backing up the rootfs"
+        tar -zcvf $TMP_DIR/rootfs.debian.tar.gz $ROOTFS_DIR
+    fi
+}
+
+function reynbos_rebase() { #HELP rebase - remove rootfs and replace with a fresh debian rootfs
+    if [[ -f "$ROOTFS_DIR" ]]; then
+        reynbos_prompt "This will remove the rootfs and restore a base debian rootfs in its place.."
+    fi
+    rm -rf $ROOTFS_DIR
+    tar -xzvf $TMP_DIR/rootfs.debian.tar.gz
+}
+
+function reynbos_getkernel() { #HELP getkernel - download and unpack the latest kernel
+    if [[ -f "$TMP_DIR/$ARCHIVE_FILE" ]]; then
+        log "we already have a kernel zipped.."
+    else
+        log "Downloading the kernel ..."
+        wget -c $DOWNLOAD_URL
+    fi
+    log "Deleting old kernel folder ..."
+    rm -rf $KERNEL_EXTRACT_DIR
+    mkdir $KERNEL_EXTRACT_DIR
+    tar -xvf $TMP_DIR/$ARCHIVE_FILE -C $KERNEL_EXTRACT_DIR/
+}
+
+function reynbos_buildkernel() { #HELP buildkernel - build the kernel
+    cd $KERNEL_EXTRACT_DIR
+    cd $(ls -d *)
+    WORK_KERNEL_DIR=$(pwd)
+
+    cp -v /boot/config-* .config
+
+    ## Get Kernel Build Tools
+    apt-get install -y build-essential libncurses-dev bison flex libssl-dev libelf-dev
+
+    sed -i "s/.*CONFIG_DEFAULT_HOSTNAME.*/CONFIG_DEFAULT_HOSTNAME=\"REYNBOS\"/" .config
+    make 
+    make modules_install 
+    make install
+}
+
+function reynbos_download() { #HELP download - debian base rootfs and the kernel
+    reynbos_getdebian
+}
+
+function reynbos_setup() { #HELP setup - setup the customized reynbos debian distro
+    log "Running system setup"
+cat <<EOF >$ROOTFS_DIR/systemsetup.sh
+#!/bin/bash
+set -e
+set -x
+
+apt-get purge $(aptitude search '~i!~M!~prequired!~pimportant!~R~prequired!~R~R~prequired!~R~pimportant!~R~R~pimportant!busybox!grub!initramfs-tools' | awk '{print $2}')
+apt-get purge aptitude
+apt-get autoremove
+apt-get clean
+
+DEBIAN_FRONTEND=noninteractive apt-get install -y keyboard-configuration
+
+echo ReynbOS > /etc/hostname
+
+# base image and required tools for live boot
+apt-cache search linux-image
+apt-get update 
+apt-get install -y --no-install-recommends live-boot systemd-sysv linux-image-amd64
+
+# base ReynbOS drivers, wm & tools ##########################################################################################################################
+apt-get install -y --no-install-recommends network-manager net-tools wireless-tools wpagui curl openssh-server openssh-client xserver-xorg-core xserver-xorg xinit xterm \
+    x11-xserver-utils screenfetch screen git lightdm i3 i3status compton rofi xbacklight feh conky nano less sudo wget gnupg ca-certificates lxappearance arc-theme firmware-iwlwifi \
+    plymouth plymouth-themes
+
+apt update
+
+# basic software ###########################################################################################################################################
+# Brave Browser
+#wget --no-check-certificate -qO - https://brave-browser-apt-release.s3.brave.com/brave-core.asc | apt-key --keyring /etc/apt/trusted.gpg.d/brave-browser-release.gpg add -
+#echo "deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main" | sudo tee /etc/apt/sources.list.d/brave-browser-release.list
+#apt update
+#apt install brave-browser
+
+# Firefox (Extended Support Release) Browser
+apt install -y --no-install-recommends firefox-esr
+
+# VSCode
+wget --no-check-certificate -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/
+sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
+apt update
+apt install -y --no-install-recommends code
+
+apt-get clean
+
+# configurations ###########################################################################################################################################
+sed -i 's/#autologin-user=/autologin-user=root/g' /etc/lightdm/lightdm.conf
+sed -i 's/#autologin-guest=false/autologin-guest=false/g' /etc/lightdm/lightdm.conf
+sed -i 's/#autologin-user-timeout=/autologin-user-timeout=0/g' /etc/lightdm/lightdm.conf
+sed -i 's/#autologin-session=/autologin-session=i3/g' /etc/lightdm/lightdm.conf
+sed -i 's/user != root//g' /etc/pam.d/lightdm-autologin
+
+chmod 755 /root/.xinitrc
+echo -e '127.0.0.1\tlocalhost' > /etc/hosts
+echo -e '127.0.0.1\tReynbOS' >> /etc/hosts
+passwd -d root
+
+# clean-up ##################################################################################################################################################
+echo "done .. Running CleanUp"
+
+truncate -s 0 /etc/machine-id
+apt-get clean
+rm -rf /tmp/* 
+rm -rf ~/.bash_history
+EOF
+    chmod +x $ROOTFS_DIR/systemsetup.sh
+    chroot $ROOTFS_DIR ./systemsetup.sh
+    rm -f $ROOTFS_DIR/systemsetup.sh
+    log "copying the custom rootfs"
+    cp -R rootfs $WORK_DIR
+    log "copying reynbos build script"
+    cp reynbos $ROOTFS_DIR/root/reynbos
+    log "installing Reynbos Recipe"
+    cp ReynbosRecipe.sh
+    chmod +x $ROOTFS_DIR/ReynbosRecipe.sh
+    chroot $ROOTFS_DIR ./ReynbosRecipe.sh
+    rm -f $ROOTFS_DIR/ReynbosRecipe.sh
+
+    sleep 2
+    sync
+
+    log "Running post installation script"
+#post installation script
+cat <<EOF >$ROOTFS_DIR/systemsetup.sh
+# install the reynbos plymouth theme
+update-alternatives --install /usr/share/plymouth/themes/default.plymouth default.plymouth /usr/share/plymouth/themes/reynbos/reynbos.plymouth 100
+# set the reynbos theme as the default
+plymouth-set-default-theme -R reynbos
+# update kernel
+cd /root/
+./reynbos getkernel
+./reynbos buildkernel
+echo "done .. Running CleanUp"
+truncate -s 0 /etc/machine-id
+apt-get clean
+rm -rf /tmp/* 
+rm -rf ~/.bash_history
+EOF
+    chmod +x $ROOTFS_DIR/systemsetup.sh
+    chroot $ROOTFS_DIR ./systemsetup.sh
+    rm -f $ROOTFS_DIR/systemsetup.sh
+    log "System setup done..."
+}
+
+function reynbos_iso() { #HELP iso - generate iso image
+    rm -rf $WORK_DIR/scratch/
+    rm -rf $WORK_DIR/image/
+
+    mkdir -p $WORK_DIR/scratch
+    mkdir -p $WORK_DIR/image
+    mkdir -p $WORK_DIR/image/live
+
+    sudo mksquashfs \
+        $ROOTFS_DIR \
+        $WORK_DIR/image/live/filesystem.squashfs \
+        -e boot
+
+    cp $ROOTFS_DIR/boot/vmlinuz* $WORK_DIR/image/vmlinuz
+    cp $ROOTFS_DIR/boot/initrd.img-* $WORK_DIR/image/initrd.img
+
+cat <<EOF >$WORK_DIR/scratch/grub.cfg
+search --set=root --file /REYNBOS_LIVE
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"
+set default="0"
+set timeout=0
+menuentry "$PROJECT_NAME Live" {
+    linux /vmlinuz boot=live quiet splash
+    initrd /initrd.img
+}
+EOF
+
+    touch $WORK_DIR/image/REYNBOS_LIVE
+
+    ls -lh $WORK_DIR
+    ls -lRh $WORK_DIR/scratch
+    ls -lRh $WORK_DIR/image
+
+    grub-mkstandalone \
+        --format=x86_64-efi \
+        --output=$WORK_DIR/scratch/bootx64.efi \
+        --locales="" \
+        --fonts="" \
+        "boot/grub/grub.cfg=$WORK_DIR/scratch/grub.cfg"
+
+    (cd $WORK_DIR/scratch && \
+        dd if=/dev/zero of=efiboot.img bs=1M count=10 && \
+        mkfs.vfat efiboot.img && \
+        mmd -i efiboot.img efi efi/boot && \
+        mcopy -i efiboot.img ./bootx64.efi ::efi/boot/
+    )
+
+    grub-mkstandalone \
+        --format=i386-pc \
+        --output=$WORK_DIR/scratch/core.img \
+        --install-modules="linux normal iso9660 biosdisk memdisk search tar ls" \
+        --modules="linux normal iso9660 biosdisk search" \
+        --locales="" \
+        --fonts="" \
+        "boot/grub/grub.cfg=$WORK_DIR/scratch/grub.cfg"
+
+    cat \
+        /usr/lib/grub/i386-pc/cdboot.img \
+        $WORK_DIR/scratch/core.img \
+    > $WORK_DIR/scratch/bios.img
+
+    xorriso \
+        -as mkisofs \
+        -iso-level 3 \
+        -full-iso9660-filenames \
+        -volid "REYNBOS_LIVE" \
+        -eltorito-boot \
+            boot/grub/bios.img \
+            -no-emul-boot \
+            -boot-load-size 4 \
+            -boot-info-table \
+            --eltorito-catalog boot/grub/boot.cat \
+        --grub2-boot-info \
+        --grub2-mbr /usr/lib/grub/i386-pc/boot_hybrid.img \
+        -eltorito-alt-boot \
+            -e EFI/efiboot.img \
+            -no-emul-boot \
+        -append_partition 2 0xef $WORK_DIR/scratch/efiboot.img \
+        -output "$PROJECT_NAME.iso" \
+        -graft-points \
+            "$WORK_DIR/image" \
+            /boot/grub/bios.img=$WORK_DIR/scratch/bios.img \
+            /EFI/efiboot.img=$WORK_DIR/scratch/efiboot.img
+}
+
+function reynbos_bootstrap() { #HELP bootstrap - download, setup and build iso image.
+    reynbos_recipe $1
+    reynbos_download
+    reynbos_setup
+    reynbos_iso
+}
+
+function reynbos_recipe() {
+    Recipe=$1
+    log $Recipe
+    if [[ $Recipe ]]; then
+        echo "Bootstrapping Reynbos $Recipe Edition"
+    else
+        Recipe=Hacker
+        echo "Bootstrapping Reynbos $Recipe Edition"
+    fi
+    wget -c $GITSRC/Recipes/$1 -O ReynbosRecipe.sh
+}
+
+function reynbos_clean() { #HELP clean - clean solution
+    reynbos_prompt "This will remove the work directory and all associated files..."
+    log "Cleaning solution"
+    rm -rf work/
+}
+
+function reynbos_persist { #HELP persist - flash image to USB with persistance.
+    source=$BASE_DIR/$PROJECT_NAME.iso
+    target=$1
+    echo $source
+    echo $target
+    inversvid="\0033[7m"
+    resetvid="\0033[0m"
+    greenback="\0033[1;37;42m"
+    blueback="\0033[1;37;44m"
+    redback="\0033[1;37;41m"
+    bar="--------------------------------------------------------------------------------"
+    echo "Trying to unmount partitions if mounted on the target device"
+    umount "$target"*
+    df | grep "$target"
+    if [ $? -eq 0 ]
+    then
+    echo -e "$redback reynbos: could not unmount a partition on the target device $resetvid"
+    exit
+    fi
+    echo "$bar"
+    echo -e "$inversvid Please wait until the process has finished and 'Done' is written $resetvid"
+    which pv > /dev/null
+    if [ $? -eq 0 ]
+    then
+    pv "$source" | sed 's/splash quiet/persistence /;s/quiet splash/persistence /' > "$target"
+    else
+    < "$source" sed 's/splash quiet/persistence /;s/quiet splash/persistence /' > "$target"
+    fi
+    if [ $? -eq 0 ]
+    then
+    success=true
+    else
+    success=false
+    fi
+    sleep 2
+    sync
+    sleep 4
+    partprobe 2> /dev/null
+    sleep 4
+    partn0=/dev/$(lsblk -l -o name "${target}" | tail -n1)
+    echo 'n
+    p
+
+
+
+    w' | fdisk "${target}"
+    sleep 4
+    sync
+    sleep 4
+    prober
+    partnr=/dev/$(lsblk -l -o name "${target}" | tail -n1)
+    if ! test -b "$partnr"
+    then
+    echo "The target's partition $partnr not found"
+    exit
+    fi
+    dd if=/dev/zero of="$partnr" bs=1024 count=1024
+    sleep 4
+    sync
+    partprobe 2> /dev/null
+    sleep 4
+    mkfs.ext2 -L persistence "$partnr"
+    sleep 2
+    if [ $? -ne 0 ]
+    then
+    success=false
+    fi
+    sync
+    sleep 4
+    lp1=$(mktemp -d)
+    mount "$partnr" "$lp1"
+    if [ $? -ne 0 ]
+    then
+    success=false
+    fi
+    echo '/ union' > "$lp1"/persistence.conf
+    sync
+    umount "$lp1"
+    sleep 2
+    rm -r "$lp1"
+    sleep 2
+    sync
+    if $success
+    then
+        echo -e "$greenback Done :-) $resetvid"
+    else
+        echo -e "$redback failed :-( $resetvid"
+    fi
+}
+
+function reynbos_flash() { #HELP flash - flash live image to USB
+    echo "hello world"
+}
+
+function reynbos_test() { #HELP test - starts a VM up with the latest build
+    qemu-system-x86_64 -m 2G -cdrom $PROJECT_NAME.iso -boot d -vga std -accel kvm
+}
+
+function reynbos_prompt() {
+    echo $1
+    read -p "Are You Sure? " -n 1 -r
+    echo # (optional) move to a new line
+    if [[ ! $REPLY =~ ^[Yy]$ ]]
+    then
+        [[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+    fi
+}
+
+function reynbos_help() { #HELP help - Displays this message
+	sed -n "s/^.*#HELP\\s//p;" < "$1" | sed "s/\\\\n/\n\t/g;;s!REYNBOS!${1/!/\\!}!g"
+}
+
+function log() {
+    message=$1
+    echo "$(date)" "$message"
+}
+
+[[ -z "${1-}" ]] && reynbos_help "$0"
+case $1 in
+	setup|getdebian|rebase|getkernel|buildkernel|clean|requirements|iso|test|bootstrap|persist|flash|packfs|extractfs|install|recipe) reynbos_"$1" "${@:2}" ;;
+	*) reynbos_help "$0" ;;
+esac
+
+duration_end=`date +%s`
+runtime=$((duration_end-duration_start))
+echo "Completed in $runtime seconds..."

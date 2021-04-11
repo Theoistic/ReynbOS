@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ReynbOS Documentation</title>
+    <link rel="shortcut icon" type="image/jpg" href="../Media/ReynbOS_Icon.ico"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:300,400,600,700,800,900" rel="stylesheet">
+    <link rel="stylesheet" href="scribbler-global.css">
+    <link rel="stylesheet" href="scribbler-doc.css">
+  </head>
+  <body>
+    <div class="doc__bg"></div>
+    <nav class="header">
+      <h1 class="logo logo-doc"><span class="txt">ReynbOS <span class="logo__thin">Doc</span></span></h1>
+      <ul class="menu">
+        <div class="menu__item toggle"><span></span></div>
+        <li class="menu__item"><a href="https://github.com/Theoistic/ReynbOS" class="link link--light"><i class="fa fa-github"></i> Github</a></li>
+        <li class="menu__item"><a href="https://ReynbOS.live" class="link link--light"><i class="fa fa-home"></i> Home</a></li>
+      </ul>
+    </nav>
+    <div class="wrapper">
+      <aside class="doc__nav">
+        <ul id="nav-menu">
+          <li class="selected">Get Started</li>
+        </ul>
+      </aside>
+      <article id="post-content" class="doc__content"></article>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="reynbos_web.js"></script>
+    <script>
+        ReynbosWeb.InitDoc('Theoistic', 'ReynbOS', 'web/posts', 'post-content', 'nav-menu');
+    </script>
+  </body>
+</html>

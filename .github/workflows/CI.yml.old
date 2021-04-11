@@ -1,0 +1,37 @@
+
+name: CI
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Requirements
+        shell: bash
+        run: |
+          #setup requirements
+          sudo bash reynbos requirements
+
+      - name: Build
+        shell: bash
+        run: |
+          tag=$(git describe --tags --abbrev=0)
+          release_name="Reynbos-$tag.iso"
+          # Build everything
+          sudo bash reynbos bootstrap
+          # Delete output directory
+          # rm -rf "work/" # just maybe.
+          sudo mv ReynbOS.iso ${release_name}
+          
+      - name: Publish
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "Reynbos-*.iso"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
