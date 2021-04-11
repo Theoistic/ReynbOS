@@ -153,8 +153,12 @@ apt-get install -y --no-install-recommends network-manager net-tools wireless-to
 
 apt update
 
+sudo adduser --disabled-password --gecos "" --shell /bin/bash rey
+sudo usermod -g sudo rey
+passwd -d rey
+
 # configurations ###########################################################################################################################################
-sed -i 's/#autologin-user=/autologin-user=root/g' /etc/lightdm/lightdm.conf
+sed -i 's/#autologin-user=/autologin-user=rey/g' /etc/lightdm/lightdm.conf
 sed -i 's/#autologin-guest=false/autologin-guest=false/g' /etc/lightdm/lightdm.conf
 sed -i 's/#autologin-user-timeout=/autologin-user-timeout=0/g' /etc/lightdm/lightdm.conf
 sed -i 's/#autologin-session=/autologin-session=i3/g' /etc/lightdm/lightdm.conf
@@ -176,10 +180,15 @@ EOF
     chmod +x $ROOTFS_DIR/systemsetup.sh
     chroot $ROOTFS_DIR ./systemsetup.sh
     rm -f $ROOTFS_DIR/systemsetup.sh
+
     log "copying the custom rootfs"
     cp -R rootfs $WORK_DIR
+    cp -R rootfs/root/. $ROOTFS_DIR/home/rey/
+    sed 's/root/home\/rey/g' $ROOTFS_DIR/root/.config/i3/config > $ROOTFS_DIR/home/rey/.config/i3/config
+
     log "copying reynbos build script"
-    cp reynbos $ROOTFS_DIR/root/reynbos
+    cp reynbos $ROOTFS_DIR/usr/local/bin/reynbos
+
     log "installing Reynbos Recipe"
     cp $BASE_DIR/ReynbosRecipe.sh $ROOTFS_DIR/ReynbosRecipe.sh
     chmod +x $ROOTFS_DIR/ReynbosRecipe.sh
@@ -310,7 +319,7 @@ function reynbos_recipe() {
         Recipe=Hacker
         echo "Bootstrapping Reynbos $Recipe Edition"
     fi
-    wget -c $GITSRC/Recipes/$Recipe -O ReynbosRecipe.sh
+    wget -q $GITSRC/Recipes/$Recipe -O ReynbosRecipe.sh
 }
 
 function reynbos_clean() { #HELP clean - clean solution
