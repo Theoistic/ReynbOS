@@ -20,25 +20,25 @@ I've made it easy for you to join in and start tinkering with ReynbOS and start 
 note that as of now, the build process as only been tested on `Debian` and `Ubuntu` since the distro is debian based its recommended to build and test it on a debian based distro.
 
 ```bash
-git clone https://github.com/Theoistic/ReynbOS.git
+sudo wget https://reynbos.live/reynbos -O /usr/local/bin/reynbos
 ```
 
 install the required packages
 
 ```bash
-sudo .\reynbos requirements
+sudo reynbos requirements
 ```
 
-To build the iso, note that this process can take a while, since its downloading all the required debian packages to build an entire distro
+To build the iso, note that this process can take a while, since its downloading all the required debian packages to build an entire distro.. Note that in the example below we install the "Hacker" edition, at the moment we have Developer & Hacker
 
 ```bash
-sudo .\reynbos bootstrap
+sudo reynbos bootstrap Hacker
 ```
 
 after you've generated the iso, you can go ahead and test it.
 
 ```bash
-sudo .\reynbos test
+sudo reynbos test
 ```
 
 ## Key bindings

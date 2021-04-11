@@ -19,7 +19,7 @@ ISO_DIR=$WORK_DIR/isoimage
 VERSION_DATE=`date -I | tr -d -`
 duration_start=`date +%s`
 TMP_DIR=/tmp
-GITSRC=https://raw.githubusercontent.com/Theoistic/ReynbOS/master
+GITSRC=https://reynbos.live
 
 echo "  "
 echo "  ██████╗ ███████╗██╗   ██╗███╗   ██╗██████╗  ██████╗ ███████╗"
@@ -294,6 +294,7 @@ EOF
 }
 
 function reynbos_bootstrap() { #HELP bootstrap - download, setup and build iso image.
+    reynbos_extractfs
     reynbos_recipe $1
     reynbos_download
     reynbos_setup
@@ -309,7 +310,7 @@ function reynbos_recipe() {
         Recipe=Hacker
         echo "Bootstrapping Reynbos $Recipe Edition"
     fi
-    wget -c $GITSRC/Recipes/$1 -O ReynbosRecipe.sh
+    wget -c $GITSRC/Recipes/$Recipe -O ReynbosRecipe.sh
 }
 
 function reynbos_clean() { #HELP clean - clean solution
